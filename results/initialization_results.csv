@@ -1,0 +1,4 @@
+initialization,train_accuracy,test_accuracy,final_train_loss,final_test_loss
+zero,0.8657,0.8867,0.330933,0.302916
+small random,0.8657,0.8867,0.330933,0.302918
+large random,0.8657,0.8867,0.331083,0.303881
