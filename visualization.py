@@ -1,0 +1,51 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+
+def plot_loss(history_items, title, path):
+    plt.figure(figsize=(9, 6))
+    for label, train_losses, val_losses in history_items:
+        epochs = np.arange(1, len(train_losses) + 1)
+        plt.plot(epochs, train_losses, label=f"{label}: train")
+        plt.plot(epochs, val_losses, linestyle="--", label=f"{label}: test")
+    plt.xlabel("Epoch")
+    plt.ylabel("Binary cross-entropy")
+    plt.title(title)
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(path, dpi=160)
+    plt.close()
+
+
+def plot_decision_boundary(model, X_train, y_train, X_test, y_test, path):
+    plt.figure(figsize=(8, 6))
+    plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap="coolwarm", alpha=0.65, label="train")
+    plt.scatter(
+        X_test[:, 0],
+        X_test[:, 1],
+        c=y_test,
+        cmap="coolwarm",
+        alpha=0.95,
+        marker="x",
+        label="test",
+    )
+
+    x_min, x_max = X_train[:, 0].min() - 0.5, X_train[:, 0].max() + 0.5
+    xs = np.linspace(x_min, x_max, 200)
+
+    if abs(model.w[1]) > 1e-12:
+        ys = -(model.w[0] * xs + model.b) / model.w[1]
+        plt.plot(xs, ys, color="black", linewidth=2, label="w^T x + b = 0")
+    else:
+        x_line = -model.b / model.w[0]
+        plt.axvline(x_line, color="black", linewidth=2, label="w^T x + b = 0")
+
+    plt.xlabel("Feature 1 (standardized)")
+    plt.ylabel("Feature 2 (standardized)")
+    plt.title("Decision boundary")
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(path, dpi=160)
+    plt.close()
