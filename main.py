@@ -4,6 +4,7 @@ from experiments import (
     run_batch_size_experiment,
     run_cross_validation_experiment,
     run_custom_data_experiment,
+    run_epoch_experiment,
     run_initialization_experiment,
     run_learning_rate_experiment,
     run_loss_and_regularization_experiment,
@@ -53,6 +54,7 @@ def main():
     )
 
     learning_rate_rows = run_learning_rate_experiment(X_train, y_train, X_test, y_test)
+    epoch_rows = run_epoch_experiment(X_train, y_train, X_test, y_test)
     batch_size_rows = run_batch_size_experiment(X_train, y_train, X_test, y_test)
     initialization_rows = run_initialization_experiment(X_train, y_train, X_test, y_test)
     custom_data_rows = run_custom_data_experiment()
@@ -63,6 +65,7 @@ def main():
 
     print_table("Base metrics", base_rows)
     print_table("Learning rate experiment", learning_rate_rows)
+    print_table("Epoch count experiment", epoch_rows)
     print_table("Batch size experiment", batch_size_rows)
     print_table("Initialization experiment", initialization_rows)
     print_table("Custom data generator experiment", custom_data_rows)

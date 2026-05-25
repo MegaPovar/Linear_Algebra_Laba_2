@@ -92,6 +92,60 @@ def run_learning_rate_experiment(X_train, y_train, X_test, y_test):
     return rows
 
 
+def run_epoch_experiment(X_train, y_train, X_test, y_test):
+    rows = []
+    histories = []
+
+    for epochs in [10, 50, 100, 200]:
+        model, train_acc, test_acc = train_model(X_train, y_train, X_test, y_test, epochs=epochs)
+        rows.append(
+            {
+                "epochs": epochs,
+                "train_accuracy": rounded(train_acc),
+                "test_accuracy": rounded(test_acc),
+                "final_train_loss": rounded(model.train_losses[-1], 6),
+                "final_test_loss": rounded(model.val_losses[-1], 6),
+            }
+        )
+        histories.append((f"epochs={epochs}", model.train_losses, model.val_losses))
+
+    write_rows(
+        RESULTS_DIR / "epoch_results.csv",
+        ["epochs", "train_accuracy", "test_accuracy", "final_train_loss", "final_test_loss"],
+        rows,
+    )
+    plot_loss(histories, "Epoch count experiment", RESULTS_DIR / "epoch_experiment.png")
+    write_epoch_conclusions(rows)
+
+    return rows
+
+
+def write_epoch_conclusions(rows):
+    best_row = max(rows, key=lambda row: row["test_accuracy"])
+    last_row = rows[-1]
+    lines = [
+        "Выводы по количеству эпох",
+        "",
+        (
+            "1. При увеличении количества эпох loss обычно уменьшается, "
+            "потому что модель делает больше шагов градиентного спуска."
+        ),
+        (
+            "2. Лучшее качество на тестовой выборке в этом эксперименте: "
+            f"epochs = {best_row['epochs']}, test accuracy = {best_row['test_accuracy']}."
+        ),
+        (
+            "3. При epochs = "
+            f"{last_row['epochs']} итоговый train loss = {last_row['final_train_loss']}, "
+            f"test loss = {last_row['final_test_loss']}."
+        ),
+        "",
+        "Итог: слишком маленькое число эпох может не дать модели сойтись, а после насыщения дальнейшее увеличение эпох почти не меняет accuracy.",
+    ]
+
+    (RESULTS_DIR / "epoch_conclusions.txt").write_text("\n".join(lines), encoding="utf-8")
+
+
 def run_batch_size_experiment(X_train, y_train, X_test, y_test):
     rows = []
     histories = []
