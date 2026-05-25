@@ -20,6 +20,7 @@ def train_model(
     init_type="small_random",
     loss_type="cross_entropy",
     l2_lambda=0.0,
+    momentum_beta=0.0,
 ):
     model = Perceptron(
         n_features=X_train.shape[1],
@@ -28,7 +29,16 @@ def train_model(
         l2_lambda=l2_lambda,
         random_state=RANDOM_STATE,
     )
-    model.fit(X_train, y_train, X_test, y_test, epochs=epochs, lr=lr, batch_size=batch_size)
+    model.fit(
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+        epochs=epochs,
+        lr=lr,
+        batch_size=batch_size,
+        momentum_beta=momentum_beta,
+    )
 
     train_acc = accuracy(y_train, model.predict(X_train))
     test_acc = accuracy(y_test, model.predict(X_test))
@@ -490,3 +500,75 @@ def write_metrics_error_conclusions(row):
     ]
 
     (RESULTS_DIR / "metrics_error_conclusions.txt").write_text("\n".join(lines), encoding="utf-8")
+
+
+# Доп 4
+def run_momentum_experiment(X_train, y_train, X_test, y_test):
+    rows = []
+    histories = []
+
+    for beta, label in [(0.0, "SGD"), (0.5, "beta=0.5"), (0.9, "beta=0.9"), (0.99, "beta=0.99")]:
+        model, train_acc, test_acc = train_model(
+            X_train,
+            y_train,
+            X_test,
+            y_test,
+            momentum_beta=beta,
+        )
+        rows.append(
+            {
+                "method": label,
+                "beta": beta,
+                "train_accuracy": rounded(train_acc),
+                "test_accuracy": rounded(test_acc),
+                "final_train_loss": rounded(model.train_losses[-1], 6),
+                "final_test_loss": rounded(model.val_losses[-1], 6),
+                "convergence_epoch": convergence_epoch(model.train_losses),
+            }
+        )
+        histories.append((label, model.train_losses, model.val_losses))
+
+    write_rows(
+        RESULTS_DIR / "momentum_results.csv",
+        [
+            "method",
+            "beta",
+            "train_accuracy",
+            "test_accuracy",
+            "final_train_loss",
+            "final_test_loss",
+            "convergence_epoch",
+        ],
+        rows,
+    )
+    plot_loss(histories, "SGD and momentum loss", RESULTS_DIR / "momentum_loss.png")
+    write_momentum_conclusions(rows)
+
+    return rows
+
+
+def write_momentum_conclusions(rows):
+    sgd_row = next(row for row in rows if row["method"] == "SGD")
+    best_row = min(rows, key=lambda row: row["convergence_epoch"])
+
+    lines = [
+        "Выводы по градиентному спуску с momentum",
+        "",
+        (
+            "1. Обычный SGD достиг условной сходимости за "
+            f"{sgd_row['convergence_epoch']} эпох, test accuracy = {sgd_row['test_accuracy']}."
+        ),
+        (
+            "2. Самое быстрое обучение в эксперименте получилось при "
+            f"{best_row['method']}: {best_row['convergence_epoch']} эпох, "
+            f"test accuracy = {best_row['test_accuracy']}."
+        ),
+        (
+            "3. Большой импульс может ускорять движение по направлению устойчивого градиента, "
+            "но слишком большое значение иногда дает колебания и менее плавный loss."
+        ),
+        "",
+        "Итог: momentum может ускорить сходимость, но коэффициент beta нужно подбирать экспериментально.",
+    ]
+
+    (RESULTS_DIR / "momentum_conclusions.txt").write_text("\n".join(lines), encoding="utf-8")

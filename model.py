@@ -55,8 +55,10 @@ class Perceptron:
             return self.compute_hinge_loss(y_true, self.decision_function(X))
         return self.compute_cross_entropy_loss(y_true, self.forward(X))
 
-    def fit(self, X_train, y_train, X_val, y_val, epochs, lr, batch_size):
+    def fit(self, X_train, y_train, X_val, y_val, epochs, lr, batch_size, momentum_beta=0.0):
         n_samples = X_train.shape[0]
+        velocity_w = np.zeros_like(self.w)
+        velocity_b = 0.0
 
         for _ in range(epochs):
             indices = self.rng.permutation(n_samples)
@@ -73,8 +75,12 @@ class Perceptron:
                 else:
                     dw, db = self._cross_entropy_gradients(X_batch, y_batch)
 
-                self.w -= lr * dw
-                self.b -= lr * db
+                # Доп 4
+                velocity_w = momentum_beta * velocity_w + dw
+                velocity_b = momentum_beta * velocity_b + db
+
+                self.w -= lr * velocity_w
+                self.b -= lr * velocity_b
 
             self.train_losses.append(self.compute_loss(y_train, X_train))
             self.val_losses.append(self.compute_loss(y_val, X_val))

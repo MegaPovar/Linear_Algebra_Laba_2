@@ -7,6 +7,7 @@ from experiments import (
     run_learning_rate_experiment,
     run_loss_and_regularization_experiment,
     run_metrics_error_analysis,
+    run_momentum_experiment,
     train_model,
 )
 from metrics import rounded
@@ -56,6 +57,7 @@ def main():
     custom_data_rows = run_custom_data_experiment()
     loss_rows, l2_rows = run_loss_and_regularization_experiment(X_train, y_train, X_test, y_test)
     metrics_error_rows = run_metrics_error_analysis(X_train, y_train, X_test, y_test)
+    momentum_rows = run_momentum_experiment(X_train, y_train, X_test, y_test)
 
     print_table("Base metrics", base_rows)
     print_table("Learning rate experiment", learning_rate_rows)
@@ -65,6 +67,7 @@ def main():
     print_table("Loss function experiment", loss_rows)
     print_table("L2 regularization experiment", l2_rows)
     print_table("Metrics and error analysis", metrics_error_rows)
+    print_table("Momentum experiment", momentum_rows)
 
 
 if __name__ == "__main__":
