@@ -1,0 +1,4 @@
+dataset,train_accuracy,test_accuracy,final_train_loss,final_test_loss
+linear,0.9857,1.0,0.092514,0.024272
+xor,0.4943,0.4867,0.691508,0.699393
+circle,0.4829,0.4733,0.690594,0.697757

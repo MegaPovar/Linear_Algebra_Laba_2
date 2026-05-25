@@ -1,8 +1,10 @@
 from config import BATCH_SIZE, EPOCHS, LEARNING_RATE, RANDOM_STATE, RESULTS_DIR
+from data import split_and_standardize
 from metrics import accuracy, rounded
 from model import Perceptron
+from synthetic_data import generate_circle_data, generate_linear_data, generate_xor_data
 from utils import write_rows
-from visualization import plot_loss
+from visualization import plot_dataset_decision_boundary, plot_loss
 
 
 def train_model(
@@ -112,3 +114,75 @@ def run_initialization_experiment(X_train, y_train, X_test, y_test):
     plot_loss(histories, "Initialization experiment", RESULTS_DIR / "initialization_experiment.png")
 
     return rows
+
+
+def run_custom_data_experiment():
+    datasets = [
+        ("linear", "Linear Gaussian clouds", generate_linear_data(noise=0.03, random_state=RANDOM_STATE)),
+        ("xor", "XOR data", generate_xor_data(noise=0.03, random_state=RANDOM_STATE)),
+        ("circle", "Circle data", generate_circle_data(noise=0.03, random_state=RANDOM_STATE)),
+    ]
+    rows = []
+    histories = []
+
+    for dataset_name, title, (X, y) in datasets:
+        X_train, X_test, y_train, y_test = split_and_standardize(X, y)
+        model, train_acc, test_acc = train_model(X_train, y_train, X_test, y_test)
+
+        rows.append(
+            {
+                "dataset": dataset_name,
+                "train_accuracy": rounded(train_acc),
+                "test_accuracy": rounded(test_acc),
+                "final_train_loss": rounded(model.train_losses[-1], 6),
+                "final_test_loss": rounded(model.val_losses[-1], 6),
+            }
+        )
+        histories.append((dataset_name, model.train_losses, model.val_losses))
+        plot_dataset_decision_boundary(
+            model,
+            X_train,
+            y_train,
+            X_test,
+            y_test,
+            title,
+            RESULTS_DIR / f"custom_{dataset_name}_boundary.png",
+        )
+
+    write_rows(
+        RESULTS_DIR / "custom_data_results.csv",
+        ["dataset", "train_accuracy", "test_accuracy", "final_train_loss", "final_test_loss"],
+        rows,
+    )
+    plot_loss(histories, "Custom data generator experiment", RESULTS_DIR / "custom_data_loss.png")
+    write_custom_data_conclusions(rows)
+
+    return rows
+
+
+def write_custom_data_conclusions(rows):
+    row_by_dataset = {row["dataset"]: row for row in rows}
+    lines = [
+        "Выводы по собственному генератору данных",
+        "",
+        (
+            "1. На линейно разделимых гауссовых облаках перцептрон работает успешно: "
+            f"accuracy на тестовой выборке = {row_by_dataset['linear']['test_accuracy']}."
+        ),
+        (
+            "2. На XOR качество низкое, потому что классы нельзя разделить одной прямой: "
+            f"accuracy на тестовой выборке = {row_by_dataset['xor']['test_accuracy']}."
+        ),
+        (
+            "3. На данных вида окружности перцептрон также ограничен линейной границей: "
+            f"accuracy на тестовой выборке = {row_by_dataset['circle']['test_accuracy']}."
+        ),
+        "",
+        (
+            "Итог: однослойный перцептрон с двумя входами и сигмоидой строит линейную "
+            "разделяющую границу. Поэтому он подходит для линейно разделимых данных, "
+            "но плохо решает задачи, где нужна нелинейная граница."
+        ),
+    ]
+
+    (RESULTS_DIR / "custom_data_conclusions.txt").write_text("\n".join(lines), encoding="utf-8")

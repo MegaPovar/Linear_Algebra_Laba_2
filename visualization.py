@@ -49,3 +49,38 @@ def plot_decision_boundary(model, X_train, y_train, X_test, y_test, path):
     plt.tight_layout()
     plt.savefig(path, dpi=160)
     plt.close()
+
+
+def plot_dataset_decision_boundary(model, X_train, y_train, X_test, y_test, title, path):
+    plt.figure(figsize=(8, 6))
+
+    x_min = min(X_train[:, 0].min(), X_test[:, 0].min()) - 0.5
+    x_max = max(X_train[:, 0].max(), X_test[:, 0].max()) + 0.5
+    y_min = min(X_train[:, 1].min(), X_test[:, 1].min()) - 0.5
+    y_max = max(X_train[:, 1].max(), X_test[:, 1].max()) + 0.5
+
+    xx, yy = np.meshgrid(np.linspace(x_min, x_max, 250), np.linspace(y_min, y_max, 250))
+    grid = np.c_[xx.ravel(), yy.ravel()]
+    probabilities = model.forward(grid).reshape(xx.shape)
+
+    plt.contourf(xx, yy, probabilities, levels=20, cmap="coolwarm", alpha=0.25)
+    plt.contour(xx, yy, probabilities, levels=[0.5], colors="black", linewidths=2)
+    plt.scatter(X_train[:, 0], X_train[:, 1], c=y_train, cmap="coolwarm", alpha=0.6, label="train")
+    plt.scatter(
+        X_test[:, 0],
+        X_test[:, 1],
+        c=y_test,
+        cmap="coolwarm",
+        alpha=0.95,
+        marker="x",
+        label="test",
+    )
+
+    plt.xlabel("Feature 1 (standardized)")
+    plt.ylabel("Feature 2 (standardized)")
+    plt.title(title)
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(path, dpi=160)
+    plt.close()
