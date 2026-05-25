@@ -1,10 +1,12 @@
+import numpy as np
+
 from config import BATCH_SIZE, EPOCHS, LEARNING_RATE, RANDOM_STATE, RESULTS_DIR
 from data import split_and_standardize
-from metrics import accuracy, rounded
+from metrics import accuracy, classification_metrics, roc_auc, roc_curve_points, rounded
 from model import Perceptron
 from synthetic_data import generate_circle_data, generate_linear_data, generate_xor_data
 from utils import write_rows
-from visualization import plot_dataset_decision_boundary, plot_loss, plot_metric
+from visualization import plot_dataset_decision_boundary, plot_loss, plot_metric, plot_misclassified_points, plot_roc_curve
 
 
 def train_model(
@@ -371,3 +373,120 @@ def write_loss_and_regularization_conclusions(loss_rows, l2_rows):
     ]
 
     (RESULTS_DIR / "loss_regularization_conclusions.txt").write_text("\n".join(lines), encoding="utf-8")
+
+
+# Доп 3
+def run_metrics_error_analysis(X_train, y_train, X_test, y_test):
+    model, _, _ = train_model(X_train, y_train, X_test, y_test)
+    y_pred = model.predict(X_test)
+    scores = model.forward(X_test)
+    metrics = classification_metrics(y_test, y_pred)
+    roc_points = roc_curve_points(y_test, scores)
+    auc_value = roc_auc(roc_points)
+
+    rows = [
+        {
+            "accuracy": rounded(metrics["accuracy"]),
+            "precision": rounded(metrics["precision"]),
+            "recall": rounded(metrics["recall"]),
+            "f1_score": rounded(metrics["f1_score"]),
+            "roc_auc": rounded(auc_value),
+            "true_positive": metrics["true_positive"],
+            "true_negative": metrics["true_negative"],
+            "false_positive": metrics["false_positive"],
+            "false_negative": metrics["false_negative"],
+            "error_count": int(metrics["false_positive"] + metrics["false_negative"]),
+        }
+    ]
+
+    write_rows(
+        RESULTS_DIR / "metrics_error_analysis.csv",
+        [
+            "accuracy",
+            "precision",
+            "recall",
+            "f1_score",
+            "roc_auc",
+            "true_positive",
+            "true_negative",
+            "false_positive",
+            "false_negative",
+            "error_count",
+        ],
+        rows,
+    )
+
+    write_misclassified_points(X_test, y_test, y_pred, scores)
+    write_roc_points(roc_points)
+    plot_roc_curve(roc_points, auc_value, RESULTS_DIR / "roc_curve.png")
+    plot_misclassified_points(model, X_test, y_test, y_pred, RESULTS_DIR / "misclassified_points.png")
+    write_metrics_error_conclusions(rows[0])
+
+    return rows
+
+
+def write_misclassified_points(X_test, y_test, y_pred, scores):
+    rows = []
+
+    for index, (point, true_label, pred_label, score) in enumerate(zip(X_test, y_test, y_pred, scores)):
+        if true_label != pred_label:
+            rows.append(
+                {
+                    "index": index,
+                    "feature_1": rounded(point[0], 6),
+                    "feature_2": rounded(point[1], 6),
+                    "true_label": int(true_label),
+                    "predicted_label": int(pred_label),
+                    "probability_class_1": rounded(score, 6),
+                }
+            )
+
+    write_rows(
+        RESULTS_DIR / "misclassified_points.csv",
+        ["index", "feature_1", "feature_2", "true_label", "predicted_label", "probability_class_1"],
+        rows,
+    )
+
+
+def write_roc_points(roc_points):
+    rows = []
+
+    for fpr, tpr, threshold in roc_points:
+        rows.append(
+            {
+                "false_positive_rate": rounded(fpr, 6),
+                "true_positive_rate": rounded(tpr, 6),
+                "threshold": rounded(threshold, 6) if np.isfinite(threshold) else str(threshold),
+            }
+        )
+
+    write_rows(
+        RESULTS_DIR / "roc_points.csv",
+        ["false_positive_rate", "true_positive_rate", "threshold"],
+        rows,
+    )
+
+
+def write_metrics_error_conclusions(row):
+    lines = [
+        "Выводы по метрикам и анализу ошибок",
+        "",
+        (
+            "1. На тестовой выборке получены метрики: "
+            f"accuracy = {row['accuracy']}, precision = {row['precision']}, "
+            f"recall = {row['recall']}, F1-score = {row['f1_score']}, "
+            f"ROC-AUC = {row['roc_auc']}."
+        ),
+        (
+            "2. Ошибочных объектов на тестовой выборке: "
+            f"{row['error_count']} из {row['true_positive'] + row['true_negative'] + row['error_count']}."
+        ),
+        (
+            "3. Неправильно классифицированные точки находятся рядом с разделяющей прямой "
+            "или в области пересечения классов, где линейной модели труднее уверенно выбрать класс."
+        ),
+        "",
+        "Итог: дополнительных метрик достаточно, чтобы оценить не только долю правильных ответов, но и баланс ошибок разных типов.",
+    ]
+
+    (RESULTS_DIR / "metrics_error_conclusions.txt").write_text("\n".join(lines), encoding="utf-8")
