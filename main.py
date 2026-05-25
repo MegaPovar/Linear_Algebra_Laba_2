@@ -1,10 +1,11 @@
 from config import RESULTS_DIR
 from data import prepare_data
 from experiments import (
-    run_custom_data_experiment,
     run_batch_size_experiment,
+    run_custom_data_experiment,
     run_initialization_experiment,
     run_learning_rate_experiment,
+    run_loss_and_regularization_experiment,
     train_model,
 )
 from metrics import rounded
@@ -52,12 +53,15 @@ def main():
     batch_size_rows = run_batch_size_experiment(X_train, y_train, X_test, y_test)
     initialization_rows = run_initialization_experiment(X_train, y_train, X_test, y_test)
     custom_data_rows = run_custom_data_experiment()
+    loss_rows, l2_rows = run_loss_and_regularization_experiment(X_train, y_train, X_test, y_test)
 
     print_table("Base metrics", base_rows)
     print_table("Learning rate experiment", learning_rate_rows)
     print_table("Batch size experiment", batch_size_rows)
     print_table("Initialization experiment", initialization_rows)
     print_table("Custom data generator experiment", custom_data_rows)
+    print_table("Loss function experiment", loss_rows)
+    print_table("L2 regularization experiment", l2_rows)
 
 
 if __name__ == "__main__":

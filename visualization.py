@@ -84,3 +84,21 @@ def plot_dataset_decision_boundary(model, X_train, y_train, X_test, y_test, titl
     plt.tight_layout()
     plt.savefig(path, dpi=160)
     plt.close()
+
+
+def plot_metric(rows, x_key, y_keys, title, path, x_label=None, y_label=None):
+    plt.figure(figsize=(8, 6))
+    x_values = [row[x_key] for row in rows]
+
+    for y_key in y_keys:
+        y_values = [row[y_key] for row in rows]
+        plt.plot(x_values, y_values, marker="o", label=y_key)
+
+    plt.xlabel(x_label or x_key)
+    plt.ylabel(y_label or "value")
+    plt.title(title)
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(path, dpi=160)
+    plt.close()
