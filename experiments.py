@@ -132,6 +132,7 @@ def run_initialization_experiment(X_train, y_train, X_test, y_test):
     return rows
 
 
+# Доп 1
 def run_custom_data_experiment():
     datasets = [
         ("linear", "Linear Gaussian clouds", generate_linear_data(noise=0.03, random_state=RANDOM_STATE)),
@@ -204,6 +205,7 @@ def write_custom_data_conclusions(rows):
     (RESULTS_DIR / "custom_data_conclusions.txt").write_text("\n".join(lines), encoding="utf-8")
 
 
+# Доп 2
 def run_loss_and_regularization_experiment(X_train, y_train, X_test, y_test):
     loss_rows = run_hinge_loss_experiment(X_train, y_train, X_test, y_test)
     l2_rows = run_l2_regularization_experiment(X_train, y_train, X_test, y_test)

@@ -1,6 +1,7 @@
 import numpy as np
 
 
+# Доп 1
 def flip_labels(y, noise, rng):
     y_noisy = y.copy()
     mask = rng.random(y_noisy.shape[0]) < noise

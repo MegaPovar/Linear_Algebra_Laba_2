@@ -35,6 +35,7 @@ class Perceptron:
     def forward(self, X):
         return self.sigmoid(X @ self.w + self.b)
 
+    # Доп 2
     def decision_function(self, X):
         return X @ self.w + self.b
 
