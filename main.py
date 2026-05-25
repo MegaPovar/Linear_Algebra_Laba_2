@@ -2,6 +2,7 @@ from config import RESULTS_DIR
 from data import prepare_data
 from experiments import (
     run_batch_size_experiment,
+    run_cross_validation_experiment,
     run_custom_data_experiment,
     run_initialization_experiment,
     run_learning_rate_experiment,
@@ -58,6 +59,7 @@ def main():
     loss_rows, l2_rows = run_loss_and_regularization_experiment(X_train, y_train, X_test, y_test)
     metrics_error_rows = run_metrics_error_analysis(X_train, y_train, X_test, y_test)
     momentum_rows = run_momentum_experiment(X_train, y_train, X_test, y_test)
+    cross_validation_rows, final_cv_rows = run_cross_validation_experiment(X_train, y_train, X_test, y_test)
 
     print_table("Base metrics", base_rows)
     print_table("Learning rate experiment", learning_rate_rows)
@@ -68,6 +70,8 @@ def main():
     print_table("L2 regularization experiment", l2_rows)
     print_table("Metrics and error analysis", metrics_error_rows)
     print_table("Momentum experiment", momentum_rows)
+    print_table("Cross-validation experiment", cross_validation_rows)
+    print_table("Best CV model", final_cv_rows)
 
 
 if __name__ == "__main__":

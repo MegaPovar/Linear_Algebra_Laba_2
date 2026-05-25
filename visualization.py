@@ -165,3 +165,27 @@ def plot_misclassified_points(model, X_test, y_test, y_pred, path):
     plt.tight_layout()
     plt.savefig(path, dpi=160)
     plt.close()
+
+
+# Доп 5
+def plot_cv_results(rows, path):
+    plt.figure(figsize=(9, 6))
+    batch_sizes = sorted({row["batch_size"] for row in rows})
+
+    for batch_size in batch_sizes:
+        batch_rows = [row for row in rows if row["batch_size"] == batch_size]
+        batch_rows = sorted(batch_rows, key=lambda row: row["learning_rate"])
+        learning_rates = [row["learning_rate"] for row in batch_rows]
+        mean_scores = [row["mean_accuracy"] for row in batch_rows]
+        std_scores = [row["std_accuracy"] for row in batch_rows]
+        plt.errorbar(learning_rates, mean_scores, yerr=std_scores, marker="o", capsize=4, label=f"batch={batch_size}")
+
+    plt.xscale("log")
+    plt.xlabel("Learning rate")
+    plt.ylabel("Mean CV accuracy")
+    plt.title("5-fold cross-validation")
+    plt.grid(True, alpha=0.3)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(path, dpi=160)
+    plt.close()

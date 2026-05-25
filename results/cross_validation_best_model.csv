@@ -1,0 +1,2 @@
+learning_rate,batch_size,train_accuracy,test_accuracy,final_train_loss,final_test_loss
+0.5,32,0.8657,0.8867,0.330795,0.300873

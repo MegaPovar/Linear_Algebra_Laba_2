@@ -6,7 +6,14 @@ from metrics import accuracy, classification_metrics, roc_auc, roc_curve_points,
 from model import Perceptron
 from synthetic_data import generate_circle_data, generate_linear_data, generate_xor_data
 from utils import write_rows
-from visualization import plot_dataset_decision_boundary, plot_loss, plot_metric, plot_misclassified_points, plot_roc_curve
+from visualization import (
+    plot_cv_results,
+    plot_dataset_decision_boundary,
+    plot_loss,
+    plot_metric,
+    plot_misclassified_points,
+    plot_roc_curve,
+)
 
 
 def train_model(
@@ -572,3 +579,135 @@ def write_momentum_conclusions(rows):
     ]
 
     (RESULTS_DIR / "momentum_conclusions.txt").write_text("\n".join(lines), encoding="utf-8")
+
+
+# Доп 5
+def run_cross_validation_experiment(X_train, y_train, X_test, y_test):
+    learning_rates = [0.001, 0.01, 0.1, 0.5]
+    batch_sizes = [16, 32, 64, 128]
+    folds = stratified_kfold_indices(y_train, n_splits=5)
+    rows = []
+
+    for lr in learning_rates:
+        for batch_size in batch_sizes:
+            fold_accuracies = []
+
+            for fold_index, val_indices in enumerate(folds, start=1):
+                train_indices = np.setdiff1d(np.arange(len(y_train)), val_indices)
+                X_fold_train = X_train[train_indices]
+                y_fold_train = y_train[train_indices]
+                X_fold_val = X_train[val_indices]
+                y_fold_val = y_train[val_indices]
+
+                _, _, val_acc = train_model(
+                    X_fold_train,
+                    y_fold_train,
+                    X_fold_val,
+                    y_fold_val,
+                    lr=lr,
+                    batch_size=batch_size,
+                )
+                fold_accuracies.append(val_acc)
+
+            rows.append(
+                {
+                    "learning_rate": lr,
+                    "batch_size": batch_size,
+                    "fold_1": rounded(fold_accuracies[0]),
+                    "fold_2": rounded(fold_accuracies[1]),
+                    "fold_3": rounded(fold_accuracies[2]),
+                    "fold_4": rounded(fold_accuracies[3]),
+                    "fold_5": rounded(fold_accuracies[4]),
+                    "mean_accuracy": rounded(np.mean(fold_accuracies)),
+                    "std_accuracy": rounded(np.std(fold_accuracies)),
+                }
+            )
+
+    best_row = max(rows, key=lambda row: (row["mean_accuracy"], -row["std_accuracy"]))
+    final_model, final_train_acc, final_test_acc = train_model(
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+        lr=best_row["learning_rate"],
+        batch_size=best_row["batch_size"],
+    )
+    final_rows = [
+        {
+            "learning_rate": best_row["learning_rate"],
+            "batch_size": best_row["batch_size"],
+            "train_accuracy": rounded(final_train_acc),
+            "test_accuracy": rounded(final_test_acc),
+            "final_train_loss": rounded(final_model.train_losses[-1], 6),
+            "final_test_loss": rounded(final_model.val_losses[-1], 6),
+        }
+    ]
+
+    write_rows(
+        RESULTS_DIR / "cross_validation_results.csv",
+        [
+            "learning_rate",
+            "batch_size",
+            "fold_1",
+            "fold_2",
+            "fold_3",
+            "fold_4",
+            "fold_5",
+            "mean_accuracy",
+            "std_accuracy",
+        ],
+        rows,
+    )
+    write_rows(
+        RESULTS_DIR / "cross_validation_best_model.csv",
+        ["learning_rate", "batch_size", "train_accuracy", "test_accuracy", "final_train_loss", "final_test_loss"],
+        final_rows,
+    )
+    plot_cv_results(rows, RESULTS_DIR / "cross_validation_results.png")
+    plot_loss(
+        [("best CV model", final_model.train_losses, final_model.val_losses)],
+        "Best CV model loss",
+        RESULTS_DIR / "cross_validation_best_loss.png",
+    )
+    write_cross_validation_conclusions(best_row, final_rows[0])
+
+    return rows, final_rows
+
+
+def stratified_kfold_indices(y, n_splits=5):
+    rng = np.random.default_rng(RANDOM_STATE)
+    folds = [[] for _ in range(n_splits)]
+
+    for class_label in np.unique(y):
+        class_indices = np.where(y == class_label)[0]
+        class_indices = rng.permutation(class_indices)
+        class_parts = np.array_split(class_indices, n_splits)
+
+        for fold, part in zip(folds, class_parts):
+            fold.extend(part.tolist())
+
+    return [np.array(sorted(fold)) for fold in folds]
+
+
+def write_cross_validation_conclusions(best_row, final_row):
+    lines = [
+        "Выводы по кросс-валидации и подбору гиперпараметров",
+        "",
+        (
+            "1. Проведена 5-кратная стратифицированная кросс-валидация по скорости обучения "
+            "и размеру батча."
+        ),
+        (
+            "2. Лучшая комбинация: "
+            f"eta = {best_row['learning_rate']}, batch_size = {best_row['batch_size']}. "
+            f"Средняя accuracy = {best_row['mean_accuracy']}, std = {best_row['std_accuracy']}."
+        ),
+        (
+            "3. Финальная модель обучена на всех обучающих данных с выбранными параметрами. "
+            f"Train accuracy = {final_row['train_accuracy']}, test accuracy = {final_row['test_accuracy']}."
+        ),
+        "",
+        "Итог: кросс-валидация позволяет выбрать гиперпараметры не по одному случайному разбиению, а по среднему качеству на нескольких фолдах.",
+    ]
+
+    (RESULTS_DIR / "cross_validation_conclusions.txt").write_text("\n".join(lines), encoding="utf-8")
