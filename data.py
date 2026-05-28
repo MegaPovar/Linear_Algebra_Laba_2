@@ -1,20 +1,20 @@
-from sklearn.datasets import make_classification
-from sklearn.model_selection import train_test_split
+from sklearn.datasets import make_classification # генерим данные 
+from sklearn.model_selection import train_test_split # делим на трейн и тест
 
 from config import RANDOM_STATE
 
 
-def split_and_standardize(X, y):  # делим выборку и сразу нормализуем признаки
+def split_and_standardize(X, y):  # делим выборку и нормализуем признаки
     X_train, X_test, y_train, y_test = train_test_split(
-        X,
-        y,
+        X, # признаки
+        y, # классы объектов
         test_size=0.3,
         random_state=RANDOM_STATE,
         stratify=y,
     )
 
     mean = X_train.mean(axis=0)  # параметры считаем только по train
-    std = X_train.std(axis=0)
+    std = X_train.std(axis=0) # отклонение по train
 
     X_train_scaled = (X_train - mean) / std
     X_test_scaled = (X_test - mean) / std  # test нормализуем теми же mean/std
@@ -22,7 +22,7 @@ def split_and_standardize(X, y):  # делим выборку и сразу но
     return X_train_scaled, X_test_scaled, y_train, y_test
 
 
-def prepare_data():  # базовый датасет из обязательной части
+def prepare_data():  # базовый датасет из основной части
     X, y = make_classification(
         n_samples=500,
         n_features=2,

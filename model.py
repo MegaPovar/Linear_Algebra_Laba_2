@@ -15,10 +15,10 @@ class Perceptron:
         self.loss_type = loss_type
         self.l2_lambda = l2_lambda
         self.rng = np.random.default_rng(random_state)
-        self.w = self._init_weights()  # создали веса выбранным способом
-        self.b = 0.0  # смещение сначала нулевое
-        self.train_losses = []  # сюда сохраняем loss на обучении
-        self.val_losses = []  # сюда сохраняем loss на тесте/валидации
+        self.w = self._init_weights()  # создали веса
+        self.b = 0.0  # начальное смещение нулевое
+        self.train_losses = []  # сохраняем loss на обучении
+        self.val_losses = []  # сохраняем loss на тесте/валидации
 
     def _init_weights(self):
         if self.init_type == "zeros":
@@ -28,24 +28,24 @@ class Perceptron:
         return self.rng.normal(0.0, 0.01, self.n_features)  # маленькие случайные веса по умолчанию
 
     @staticmethod
-    def sigmoid(z):
-        z = np.clip(z, -500, 500)  # ограничиваем, чтобы exp не переполнился
+    def sigmoid(z): # переводим линейный выход в вероятности 1 и 0, ограничивая z
+        z = np.clip(z, -500, 500) 
         return 1.0 / (1.0 + np.exp(-z))
 
     def forward(self, X):  # прямой проход, получаем вероятности класса 1
         return self.sigmoid(X @ self.w + self.b)
 
-    # Доп 2
+    # Доп 2 функции потерь и регуляризации
     def decision_function(self, X):  # линейный выход без сигмоиды для hinge loss
         return X @ self.w + self.b
 
     def compute_cross_entropy_loss(self, y_true, y_pred):
         eps = 1e-15
-        y_pred = np.clip(y_pred, eps, 1.0 - eps)  # чтобы не брать log(0)
+        y_pred = np.clip(y_pred, eps, 1.0 - eps)
         loss = -np.mean(y_true * np.log(y_pred) + (1.0 - y_true) * np.log(1.0 - y_pred))
         return loss + self.l2_lambda * np.sum(self.w**2) / 2.0
 
-    def compute_hinge_loss(self, y_true, scores):
+    def compute_hinge_loss(self, y_true, scores): # доп функция потерь хинж лос
         y_signed = self._to_signed_labels(y_true)  # переводим 0/1 в -1/+1
         margins = y_signed * scores
         return np.mean(np.maximum(0.0, 1.0 - margins))
@@ -55,7 +55,7 @@ class Perceptron:
             return self.compute_hinge_loss(y_true, self.decision_function(X))
         return self.compute_cross_entropy_loss(y_true, self.forward(X))
 
-    def fit(self, X_train, y_train, X_val, y_val, epochs, lr, batch_size, momentum_beta=0.0):  # обучение мини-батчами
+    def fit(self, X_train, y_train, X_val, y_val, epochs, lr, batch_size, momentum_beta=0.0):  # главная обучался по мини батчам, доп 4 momentum
         n_samples = X_train.shape[0]
         velocity_w = np.zeros_like(self.w)
         velocity_b = 0.0
@@ -87,7 +87,7 @@ class Perceptron:
 
         return self
 
-    def _cross_entropy_gradients(self, X_batch, y_batch):
+    def _cross_entropy_gradients(self, X_batch, y_batch): # изменение весов и смещения для обычного обучения
         y_pred = self.forward(X_batch)
         error = y_pred - y_batch
 

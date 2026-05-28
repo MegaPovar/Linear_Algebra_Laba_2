@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def accuracy(y_true, y_pred):  # доля правильных ответов
+def accuracy(y_true, y_pred):  # доля правильных
     return float(np.mean(y_true == y_pred))
 
 
@@ -16,9 +16,9 @@ def classification_metrics(y_true, y_pred):
     fp = int(np.sum((y_true == 0) & (y_pred == 1)))
     fn = int(np.sum((y_true == 1) & (y_pred == 0)))
 
-    precision = tp / (tp + fp) if tp + fp > 0 else 0.0  # защита от деления на ноль
-    recall = tp / (tp + fn) if tp + fn > 0 else 0.0
-    f1 = 2.0 * precision * recall / (precision + recall) if precision + recall > 0 else 0.0
+    precision = tp / (tp + fp) if tp + fp > 0 else 0.0  # точность среди моделей класса 1
+    recall = tp / (tp + fn) if tp + fn > 0 else 0.0 # из всех объектов класса 1, сколько нашли
+    f1 = 2.0 * precision * recall / (precision + recall) if precision + recall > 0 else 0.0  
 
     return {
         "accuracy": accuracy(y_true, y_pred),
