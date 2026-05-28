@@ -13,12 +13,12 @@ from experiments import (
     train_model,
 )
 from metrics import rounded
-from utils import print_table, write_rows
+from utils import clear_results_dir, print_table, write_rows
 from visualization import plot_decision_boundary, plot_loss
 
 
 def main():
-    RESULTS_DIR.mkdir(exist_ok=True)
+    clear_results_dir(RESULTS_DIR)  # очищаем старые графики и таблицы перед новым запуском
 
     X_train, X_test, y_train, y_test = prepare_data()
 
