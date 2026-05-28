@@ -4,7 +4,7 @@ import numpy as np
 # Доп 1
 def flip_labels(y, noise, rng):
     y_noisy = y.copy()
-    mask = rng.random(y_noisy.shape[0]) < noise
+    mask = rng.random(y_noisy.shape[0]) < noise  # выбираем метки, которые надо испортить шумом
     y_noisy[mask] = 1 - y_noisy[mask]
     return y_noisy
 
@@ -20,12 +20,12 @@ def generate_linear_data(
     first_count = n_samples // 2
     second_count = n_samples - first_count
 
-    X0 = rng.multivariate_normal(centers[0], covariance, first_count)
+    X0 = rng.multivariate_normal(centers[0], covariance, first_count)  # первое гауссово облако
     X1 = rng.multivariate_normal(centers[1], covariance, second_count)
     X = np.vstack((X0, X1))
     y = np.array([0] * first_count + [1] * second_count)
 
-    indices = rng.permutation(n_samples)
+    indices = rng.permutation(n_samples)  # перемешиваем, чтобы классы не шли блоками
     X = X[indices]
     y = y[indices]
 
@@ -46,7 +46,7 @@ def generate_xor_data(n_samples=500, spread=0.35, noise=0.0, random_state=42):
 
     counts = np.full(len(centers), n_samples // len(centers))
     counts[: n_samples % len(centers)] += 1
-    corner_indices = np.repeat(np.arange(len(centers)), counts)
+    corner_indices = np.repeat(np.arange(len(centers)), counts)  # равномерно раскладываем точки по углам
     corner_indices = rng.permutation(corner_indices)
     X = centers[corner_indices] + rng.normal(0.0, spread, size=(n_samples, 2))
     y = labels[corner_indices]
@@ -59,7 +59,7 @@ def generate_circle_data(n_samples=500, radius=1.0, outer_radius=1.8, noise=0.0,
     inner_count = n_samples // 2
     outer_count = n_samples - inner_count
 
-    inner_angles = rng.uniform(0.0, 2.0 * np.pi, inner_count)
+    inner_angles = rng.uniform(0.0, 2.0 * np.pi, inner_count)  # точки внутри круга
     inner_distances = radius * np.sqrt(rng.uniform(0.0, 1.0, inner_count))
     inner_points = np.column_stack(
         (
@@ -68,7 +68,7 @@ def generate_circle_data(n_samples=500, radius=1.0, outer_radius=1.8, noise=0.0,
         )
     )
 
-    outer_angles = rng.uniform(0.0, 2.0 * np.pi, outer_count)
+    outer_angles = rng.uniform(0.0, 2.0 * np.pi, outer_count)  # точки снаружи круга
     outer_distances = np.sqrt(rng.uniform(radius**2, outer_radius**2, outer_count))
     outer_points = np.column_stack(
         (

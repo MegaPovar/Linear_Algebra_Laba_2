@@ -29,7 +29,7 @@ def train_model(
     l2_lambda=0.0,
     momentum_beta=0.0,
 ):
-    model = Perceptron(
+    model = Perceptron(  # создаем модель с нужными параметрами эксперимента
         n_features=X_train.shape[1],
         init_type=init_type,
         loss_type=loss_type,
@@ -47,13 +47,13 @@ def train_model(
         momentum_beta=momentum_beta,
     )
 
-    train_acc = accuracy(y_train, model.predict(X_train))
+    train_acc = accuracy(y_train, model.predict(X_train))  # считаем качество после обучения
     test_acc = accuracy(y_test, model.predict(X_test))
 
     return model, train_acc, test_acc
 
 
-def convergence_epoch(losses, progress=0.95):
+def convergence_epoch(losses, progress=0.95):  # условный номер эпохи, где loss почти дошел до финального
     first_loss = losses[0]
     final_loss = losses[-1]
     target_loss = first_loss - progress * (first_loss - final_loss)
@@ -65,7 +65,7 @@ def convergence_epoch(losses, progress=0.95):
     return len(losses)
 
 
-def run_learning_rate_experiment(X_train, y_train, X_test, y_test):
+def run_learning_rate_experiment(X_train, y_train, X_test, y_test):  # проверяем разные скорости обучения
     rows = []
     histories = []
 
@@ -80,7 +80,7 @@ def run_learning_rate_experiment(X_train, y_train, X_test, y_test):
                 "final_test_loss": rounded(model.val_losses[-1], 6),
             }
         )
-        histories.append((f"lr={lr}", model.train_losses, model.val_losses))
+        histories.append((f"lr={lr}", model.train_losses, model.val_losses))  # сохраняем историю для графика
 
     write_rows(
         RESULTS_DIR / "learning_rate_results.csv",
@@ -92,7 +92,7 @@ def run_learning_rate_experiment(X_train, y_train, X_test, y_test):
     return rows
 
 
-def run_epoch_experiment(X_train, y_train, X_test, y_test):
+def run_epoch_experiment(X_train, y_train, X_test, y_test):  # проверяем разное количество эпох
     rows = []
     histories = []
 
@@ -146,7 +146,7 @@ def write_epoch_conclusions(rows):
     (RESULTS_DIR / "epoch_conclusions.txt").write_text("\n".join(lines), encoding="utf-8")
 
 
-def run_batch_size_experiment(X_train, y_train, X_test, y_test):
+def run_batch_size_experiment(X_train, y_train, X_test, y_test):  # проверяем разные размеры батча
     rows = []
     histories = []
 
@@ -173,7 +173,7 @@ def run_batch_size_experiment(X_train, y_train, X_test, y_test):
     return rows
 
 
-def run_initialization_experiment(X_train, y_train, X_test, y_test):
+def run_initialization_experiment(X_train, y_train, X_test, y_test):  # сравниваем способы задания начальных весов
     rows = []
     histories = []
     labels = {
@@ -207,7 +207,7 @@ def run_initialization_experiment(X_train, y_train, X_test, y_test):
 
 # Доп 1
 def run_custom_data_experiment():
-    datasets = [
+    datasets = [  # три типа данных из первого допа
         ("linear", "Linear Gaussian clouds", generate_linear_data(noise=0.03, random_state=RANDOM_STATE)),
         ("xor", "XOR data", generate_xor_data(noise=0.03, random_state=RANDOM_STATE)),
         ("circle", "Circle data", generate_circle_data(noise=0.03, random_state=RANDOM_STATE)),
@@ -216,7 +216,7 @@ def run_custom_data_experiment():
     histories = []
 
     for dataset_name, title, (X, y) in datasets:
-        X_train, X_test, y_train, y_test = split_and_standardize(X, y)
+        X_train, X_test, y_train, y_test = split_and_standardize(X, y)  # каждый датасет делим одинаково
         model, train_acc, test_acc = train_model(X_train, y_train, X_test, y_test)
 
         rows.append(
@@ -280,14 +280,14 @@ def write_custom_data_conclusions(rows):
 
 # Доп 2
 def run_loss_and_regularization_experiment(X_train, y_train, X_test, y_test):
-    loss_rows = run_hinge_loss_experiment(X_train, y_train, X_test, y_test)
+    loss_rows = run_hinge_loss_experiment(X_train, y_train, X_test, y_test)  # сравнение функций потерь
     l2_rows = run_l2_regularization_experiment(X_train, y_train, X_test, y_test)
     write_loss_and_regularization_conclusions(loss_rows, l2_rows)
 
     return loss_rows, l2_rows
 
 
-def run_hinge_loss_experiment(X_train, y_train, X_test, y_test):
+def run_hinge_loss_experiment(X_train, y_train, X_test, y_test):  # cross-entropy против hinge loss
     rows = []
     histories = []
     configs = [
@@ -334,7 +334,7 @@ def run_hinge_loss_experiment(X_train, y_train, X_test, y_test):
     return rows
 
 
-def run_l2_regularization_experiment(X_train, y_train, X_test, y_test):
+def run_l2_regularization_experiment(X_train, y_train, X_test, y_test):  # проверяем разные lambda для L2
     rows = []
     histories = []
 
@@ -411,7 +411,7 @@ def run_l2_regularization_experiment(X_train, y_train, X_test, y_test):
 def write_loss_and_regularization_conclusions(loss_rows, l2_rows):
     ce_row = next(row for row in loss_rows if row["loss"] == "cross entropy")
     hinge_row = next(row for row in loss_rows if row["loss"] == "hinge loss")
-    best_l2 = max(l2_rows, key=lambda row: row["test_accuracy"])
+    best_l2 = max(l2_rows, key=lambda row: row["test_accuracy"])  # вариант с лучшей test accuracy
     strongest_l2 = max(l2_rows, key=lambda row: row["lambda"])
 
     lines = [
@@ -448,11 +448,11 @@ def write_loss_and_regularization_conclusions(loss_rows, l2_rows):
 
 # Доп 3
 def run_metrics_error_analysis(X_train, y_train, X_test, y_test):
-    model, _, _ = train_model(X_train, y_train, X_test, y_test)
+    model, _, _ = train_model(X_train, y_train, X_test, y_test)  # обучаем обычную модель для анализа ошибок
     y_pred = model.predict(X_test)
     scores = model.forward(X_test)
     metrics = classification_metrics(y_test, y_pred)
-    roc_points = roc_curve_points(y_test, scores)
+    roc_points = roc_curve_points(y_test, scores)  # точки ROC для разных порогов
     auc_value = roc_auc(roc_points)
 
     rows = [
@@ -500,7 +500,7 @@ def write_misclassified_points(X_test, y_test, y_pred, scores):
     rows = []
 
     for index, (point, true_label, pred_label, score) in enumerate(zip(X_test, y_test, y_pred, scores)):
-        if true_label != pred_label:
+        if true_label != pred_label:  # сохраняем только ошибочные объекты
             rows.append(
                 {
                     "index": index,
@@ -610,7 +610,7 @@ def run_momentum_experiment(X_train, y_train, X_test, y_test):
 
 def write_momentum_conclusions(rows):
     sgd_row = next(row for row in rows if row["method"] == "SGD")
-    best_row = min(rows, key=lambda row: row["convergence_epoch"])
+    best_row = min(rows, key=lambda row: row["convergence_epoch"])  # кто быстрее дошел до плато
 
     lines = [
         "Выводы по градиентному спуску с momentum",
@@ -639,7 +639,7 @@ def write_momentum_conclusions(rows):
 def run_cross_validation_experiment(X_train, y_train, X_test, y_test):
     learning_rates = [0.001, 0.01, 0.1, 0.5]
     batch_sizes = [16, 32, 64, 128]
-    folds = stratified_kfold_indices(y_train, n_splits=5)
+    folds = stratified_kfold_indices(y_train, n_splits=5)  # делим train на 5 стратифицированных частей
     rows = []
 
     for lr in learning_rates:
@@ -647,7 +647,7 @@ def run_cross_validation_experiment(X_train, y_train, X_test, y_test):
             fold_accuracies = []
 
             for fold_index, val_indices in enumerate(folds, start=1):
-                train_indices = np.setdiff1d(np.arange(len(y_train)), val_indices)
+                train_indices = np.setdiff1d(np.arange(len(y_train)), val_indices)  # все кроме текущего фолда
                 X_fold_train = X_train[train_indices]
                 y_fold_train = y_train[train_indices]
                 X_fold_val = X_train[val_indices]
@@ -677,7 +677,7 @@ def run_cross_validation_experiment(X_train, y_train, X_test, y_test):
                 }
             )
 
-    best_row = max(rows, key=lambda row: (row["mean_accuracy"], -row["std_accuracy"]))
+    best_row = max(rows, key=lambda row: (row["mean_accuracy"], -row["std_accuracy"]))  # лучшее среднее, при равенстве меньше разброс
     final_model, final_train_acc, final_test_acc = train_model(
         X_train,
         y_train,
@@ -728,12 +728,12 @@ def run_cross_validation_experiment(X_train, y_train, X_test, y_test):
     return rows, final_rows
 
 
-def stratified_kfold_indices(y, n_splits=5):
+def stratified_kfold_indices(y, n_splits=5):  # вручную делаем стратифицированные фолды
     rng = np.random.default_rng(RANDOM_STATE)
     folds = [[] for _ in range(n_splits)]
 
     for class_label in np.unique(y):
-        class_indices = np.where(y == class_label)[0]
+        class_indices = np.where(y == class_label)[0]  # отдельно берем индексы каждого класса
         class_indices = rng.permutation(class_indices)
         class_parts = np.array_split(class_indices, n_splits)
 

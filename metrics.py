@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def accuracy(y_true, y_pred):
+def accuracy(y_true, y_pred):  # доля правильных ответов
     return float(np.mean(y_true == y_pred))
 
 
@@ -11,12 +11,12 @@ def rounded(value, digits=4):
 
 # Доп 3
 def classification_metrics(y_true, y_pred):
-    tp = int(np.sum((y_true == 1) & (y_pred == 1)))
+    tp = int(np.sum((y_true == 1) & (y_pred == 1)))  # правильно нашли класс 1
     tn = int(np.sum((y_true == 0) & (y_pred == 0)))
     fp = int(np.sum((y_true == 0) & (y_pred == 1)))
     fn = int(np.sum((y_true == 1) & (y_pred == 0)))
 
-    precision = tp / (tp + fp) if tp + fp > 0 else 0.0
+    precision = tp / (tp + fp) if tp + fp > 0 else 0.0  # защита от деления на ноль
     recall = tp / (tp + fn) if tp + fn > 0 else 0.0
     f1 = 2.0 * precision * recall / (precision + recall) if precision + recall > 0 else 0.0
 
@@ -32,7 +32,7 @@ def classification_metrics(y_true, y_pred):
     }
 
 
-def roc_curve_points(y_true, scores):
+def roc_curve_points(y_true, scores):  # строим точки ROC для разных порогов
     thresholds = np.r_[np.inf, np.sort(np.unique(scores))[::-1], -np.inf]
     positive_count = np.sum(y_true == 1)
     negative_count = np.sum(y_true == 0)
@@ -50,7 +50,7 @@ def roc_curve_points(y_true, scores):
     return points
 
 
-def roc_auc(points):
+def roc_auc(points):  # площадь под ROC-кривой методом трапеций
     sorted_points = sorted(points, key=lambda point: point[0])
     fpr = np.array([point[0] for point in sorted_points])
     tpr = np.array([point[1] for point in sorted_points])
